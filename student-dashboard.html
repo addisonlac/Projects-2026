@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudySpace</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e17;
+    --surface: #1a1929;
+    --surface2: #232236;
+    --accent: #ff6b35;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --text: #fffffe;
+    --muted: #a7a9be;
+    --border: rgba(255,255,255,0.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    background-image: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(124,58,237,0.15) 0%, transparent 60%),
+                      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,107,53,0.1) 0%, transparent 60%);
+  }
+  header {
+    padding: 2rem 2.5rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .date-badge {
+    font-size: 0.8rem;
+    color: var(--muted);
+    background: var(--surface);
+    padding: 0.4rem 0.9rem;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 1.2rem 2.5rem 0;
+  }
+  .tab {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab:hover { color: var(--text); background: var(--surface); }
+  .tab.active { color: var(--text); background: var(--surface2); }
+  .tab .icon { margin-right: 0.4rem; }
+
+  /* Panels */
+  .panel { display: none; padding: 2rem 2.5rem; animation: fadeIn 0.25s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ===== TASKS ===== */
+  .task-input-row {
+    display: flex;
+    gap: 0.7rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  input[type="text"], input[type="date"], input[type="number"], select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.65rem 1rem;
+    outline: none;
+    transition: border 0.2s;
+  }
+  input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, select:focus {
+    border-color: var(--accent2);
+  }
+  input[type="text"]::placeholder { color: var(--muted); }
+  #task-input { flex: 1; min-width: 180px; }
+  select { min-width: 120px; }
+  .btn {
+    background: linear-gradient(135deg, var(--accent), #ff8c42);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.65rem 1.3rem;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn.secondary {
+    background: var(--surface2);
+    color: var(--text);
+  }
+  .tasks-list { display: flex; flex-direction: column; gap: 0.6rem; }
+  .task-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: border-color 0.2s;
+  }
+  .task-item:hover { border-color: rgba(255,255,255,0.15); }
+  .task-item.done { opacity: 0.45; }
+  .task-item.done .task-name { text-decoration: line-through; }
+  .task-check {
+    width: 20px; height: 20px;
+    border: 2px solid var(--muted);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .task-check.checked { background: var(--accent3); border-color: var(--accent3); }
+  .task-name { flex: 1; font-size: 0.95rem; }
+  .subject-tag {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 99px;
+    font-weight: 500;
+  }
+  .tag-math { background: rgba(124,58,237,0.25); color: #a78bfa; }
+  .tag-science { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+  .tag-english { background: rgba(255,107,53,0.2); color: #fca47a; }
+  .tag-history { background: rgba(251,191,36,0.2); color: #fde68a; }
+  .tag-other { background: rgba(255,255,255,0.08); color: var(--muted); }
+  .due-label { font-size: 0.78rem; color: var(--muted); }
+  .due-label.overdue { color: #f87171; }
+  .del-btn {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 1rem; padding: 0.2rem; border-radius: 4px; transition: color 0.2s;
+  }
+  .del-btn:hover { color: #f87171; }
+  .empty-state {
+    text-align: center; color: var(--muted); padding: 3rem 1rem;
+    font-size: 0.9rem;
+  }
+  .empty-state .big { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+  /* ===== GRADES ===== */
+  .grades-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media(max-width:640px) { .grades-layout { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.4rem;
+  }
+  .card h3 { font-family: 'Fraunces', serif; font-size: 1.1rem; margin-bottom: 1rem; }
+  .grade-input-row { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
+  .grade-input-row .row { display: flex; gap: 0.6rem; }
+  .grade-input-row input { flex: 1; }
+  .grade-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 220px; overflow-y: auto; }
+  .grade-entry {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 0.55rem 0.9rem;
+    display: flex; align-items: center; gap: 0.7rem;
+    font-size: 0.88rem;
+  }
+  .grade-entry .name { flex: 1; }
+  .grade-val {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .grade-A { color: var(--accent3); }
+  .grade-B { color: #60a5fa; }
+  .grade-C { color: #fbbf24; }
+  .grade-D { color: var(--accent); }
+  .grade-F { color: #f87171; }
+  .gpa-display {
+    text-align: center;
+    padding: 1rem 0;
+  }
+  .gpa-big {
+    font-family: 'Fraunces', serif;
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent3), #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gpa-label { color: var(--muted); font-size: 0.85rem; margin-top: 0.4rem; }
+  .letter-grade {
+    display: inline-block;
+    font-family: 'Fraunces', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    margin-top: 0.5rem;
+  }
+
+  /* ===== TIMER ===== */
+  .timer-center {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 1.5rem; padding-top: 1rem;
+  }
+  .timer-modes { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .mode-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    padding: 0.4rem 1rem;
+    transition: all 0.2s;
+  }
+  .mode-btn.active { background: var(--accent2); border-color: var(--accent2); color: white; }
+  .timer-ring {
+    position: relative;
+    width: 220px; height: 220px;
+  }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring circle.bg { fill: none; stroke: var(--surface2); stroke-width: 8; }
+  .timer-ring circle.prog {
+    fill: none; stroke: var(--accent2); stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 628;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear, stroke 0.5s;
+  }
+  .timer-display {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    text-align: center;
+  }
+  .timer-time {
+    font-family: 'Fraunces', serif;
+    font-size: 3.2rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .timer-phase { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; }
+  .timer-btns { display: flex; gap: 0.8rem; }
+  .session-count {
+    display: flex; gap: 0.5rem; align-items: center;
+  }
+  .pom-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    transition: all 0.3s;
+  }
+  .pom-dot.done { background: var(--accent2); border-color: var(--accent2); }
+  .timer-task-label { color: var(--muted); font-size: 0.85rem; text-align: center; }
+  .subject-selector { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
+  .subj-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.7rem;
+    transition: all 0.2s;
+  }
+  .subj-btn.active { border-color: var(--accent2); color: #a78bfa; background: rgba(124,58,237,0.15); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">StudySpace</div>
+  <div class="date-badge" id="date-display"></div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('tasks', this)"><span class="icon">📋</span>Tasks</button>
+  <button class="tab" onclick="switchTab('grades', this)"><span class="icon">📊</span>Grades</button>
+  <button class="tab" onclick="switchTab('timer', this)"><span class="icon">⏱️</span>Focus Timer</button>
+</div>
+
+<!-- TASKS PANEL -->
+<div class="panel active" id="panel-tasks">
+  <div class="task-input-row">
+    <input type="text" id="task-input" placeholder="Add a task (e.g. Read Chapter 5)..." onkeydown="if(event.key==='Enter')addTask()">
+    <select id="task-subject">
+      <option value="math">Math</option>
+      <option value="science">Science</option>
+      <option value="english">English</option>
+      <option value="history">History</option>
+      <option value="other">Other</option>
+    </select>
+    <input type="date" id="task-due">
+    <button class="btn" onclick="addTask()">+ Add</button>
+  </div>
+  <div class="tasks-list" id="tasks-list">
+    <div class="empty-state"><div class="big">📝</div>No tasks yet. Add one above!</div>
+  </div>
+</div>
+
+<!-- GRADES PANEL -->
+<div class="panel" id="panel-grades">
+  <div class="grades-layout">
+    <div class="card">
+      <h3>Add a Grade</h3>
+      <div class="grade-input-row">
+        <input type="text" id="g-name" placeholder="Assignment name" style="width:100%">
+        <div class="row">
+          <input type="number" id="g-score" placeholder="Score" min="0" max="200">
+          <input type="number" id="g-max" placeholder="Out of" min="1" max="200" value="100">
+          <button class="btn" onclick="addGrade()" style="white-space:nowrap">Add</button>
+        </div>
+      </div>
+      <div class="grade-list" id="grade-list">
+        <div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem">No grades yet</div>
+      </div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:1.2rem">
+      <h3>Average & GPA</h3>
+      <div class="gpa-display">
+        <div class="gpa-big" id="avg-display">—</div>
+        <div class="gpa-label">Class Average (%)</div>
+        <div class="letter-grade" id="letter-display" style="color:var(--muted)">—</div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:1rem">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.6rem">Grade Scale</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.3rem;font-size:0.78rem;text-align:center">
+          <div style="color:#6ee7b7">A<br><span style="color:var(--muted)">90–100</span></div>
+          <div style="color:#60a5fa">B<br><span style="color:var(--muted)">80–89</span></div>
+          <div style="color:#fbbf24">C<br><span style="color:var(--muted)">70–79</span></div>
+          <div style="color:#fca47a">D<br><span style="color:var(--muted)">60–69</span></div>
+          <div style="color:#f87171">F<br><span style="color:var(--muted)">&lt;60</span></div>
+        </div>
+      </div>
+      <button class="btn secondary" onclick="clearGrades()" style="margin-top:auto">Clear All</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIMER PANEL -->
+<div class="panel" id="panel-timer">
+  <div class="timer-center">
+    <div class="timer-modes">
+      <button class="mode-btn active" onclick="setMode('pomodoro',this)">Pomodoro (25m)</button>
+      <button class="mode-btn" onclick="setMode('short',this)">Short Break (5m)</button>
+      <button class="mode-btn" onclick="setMode('long',this)">Long Break (15m)</button>
+    </div>
+
+    <div class="timer-ring">
+      <svg width="220" height="220" viewBox="0 0 220 220">
+        <circle class="bg" cx="110" cy="110" r="100"/>
+        <circle class="prog" id="timer-prog" cx="110" cy="110" r="100"/>
+      </svg>
+      <div class="timer-display">
+        <div class="timer-time" id="timer-time">25:00</div>
+        <div class="timer-phase" id="timer-phase">Focus</div>
+      </div>
+    </div>
+
+    <div class="timer-btns">
+      <button class="btn secondary" onclick="resetTimer()">↺ Reset</button>
+      <button class="btn" id="start-btn" onclick="toggleTimer()">▶ Start</button>
+    </div>
+
+    <div class="session-count" id="pom-dots">
+      <div class="pom-dot" id="p1"></div>
+      <div class="pom-dot" id="p2"></div>
+      <div class="pom-dot" id="p3"></div>
+      <div class="pom-dot" id="p4"></div>
+      <span style="font-size:0.8rem;color:var(--muted);margin-left:0.3rem">sessions today</span>
+    </div>
+
+    <div>
+      <div style="font-size:0.8rem;color:var(--muted);text-align:center;margin-bottom:0.6rem">Studying:</div>
+      <div class="subject-selector">
+        <button class="subj-btn active" onclick="setSubject('', this)">General</button>
+        <button class="subj-btn" onclick="setSubject('Math', this)">Math</button>
+        <button class="subj-btn" onclick="setSubject('Science', this)">Science</button>
+        <button class="subj-btn" onclick="setSubject('English', this)">English</button>
+        <button class="subj-btn" onclick="setSubject('History', this)">History</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== GENERAL =====
+function switchTab(panel, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + panel).classList.add('active');
+  btn.classList.add('active');
+}
+
+// Date
+const now = new Date();
+document.getElementById('date-display').textContent = now.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
+
+// Set default due date to today
+document.getElementById('task-due').valueAsDate = new Date();
+
+// ===== TASKS =====
+let tasks = [];
+
+function addTask() {
+  const name = document.getElementById('task-input').value.trim();
+  if (!name) return;
+  const subject = document.getElementById('task-subject').value;
+  const due = document.getElementById('task-due').value;
+  tasks.push({ id: Date.now(), name, subject, due, done: false });
+  document.getElementById('task-input').value = '';
+  renderTasks();
+}
+
+function toggleTask(id) {
+  const t = tasks.find(t => t.id === id);
+  if (t) t.done = !t.done;
+  renderTasks();
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  renderTasks();
+}
+
+const tagMap = { math:'tag-math', science:'tag-science', english:'tag-english', history:'tag-history', other:'tag-other' };
+const tagLabel = { math:'Math', science:'Science', english:'English', history:'History', other:'Other' };
+
+function renderTasks() {
+  const list = document.getElementById('tasks-list');
+  if (!tasks.length) {
+    list.innerHTML = '<div class="empty-state"><div class="big">📝</div>No tasks yet. Add one above!</div>';
+    return;
+  }
+  const today = new Date().toISOString().split('T')[0];
+  list.innerHTML = tasks.map(t => {
+    const overdue = t.due && t.due < today && !t.done;
+    const dueText = t.due ? (overdue ? `⚠ Overdue: ${t.due}` : `Due: ${t.due}`) : '';
+    return `<div class="task-item ${t.done ? 'done' : ''}">
+      <div class="task-check ${t.done ? 'checked' : ''}" onclick="toggleTask(${t.id})">${t.done ? '✓' : ''}</div>
+      <span class="task-name">${t.name}</span>
+      <span class="subject-tag ${tagMap[t.subject]}">${tagLabel[t.subject]}</span>
+      ${dueText ? `<span class="due-label ${overdue ? 'overdue' : ''}">${dueText}</span>` : ''}
+      <button class="del-btn" onclick="deleteTask(${t.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ===== GRADES =====
+let grades = [];
+
+function addGrade() {
+  const name = document.getElementById('g-name').value.trim() || 'Assignment';
+  const score = parseFloat(document.getElementById('g-score').value);
+  const max = parseFloat(document.getElementById('g-max').value) || 100;
+  if (isNaN(score)) return;
+  grades.push({ name, score, max });
+  document.getElementById('g-name').value = '';
+  document.getElementById('g-score').value = '';
+  document.getElementById('g-max').value = '100';
+  renderGrades();
+}
+
+function letterFromPct(p) {
+  if (p >= 90) return 'A';
+  if (p >= 80) return 'B';
+  if (p >= 70) return 'C';
+  if (p >= 60) return 'D';
+  return 'F';
+}
+
+function renderGrades() {
+  const list = document.getElementById('grade-list');
+  if (!grades.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem">No grades yet</div>';
+    document.getElementById('avg-display').textContent = '—';
+    document.getElementById('letter-display').textContent = '—';
+    document.getElementById('letter-display').style.color = 'var(--muted)';
+    return;
+  }
+  list.innerHTML = grades.map((g, i) => {
+    const pct = Math.round(g.score / g.max * 100);
+    const letter = letterFromPct(pct);
+    const cls = `grade-${letter}`;
+    return `<div class="grade-entry">
+      <span class="name">${g.name}</span>
+      <span style="color:var(--muted);font-size:0.8rem">${g.score}/${g.max}</span>
+      <span class="grade-val ${cls}">${pct}%</span>
+      <button class="del-btn" onclick="grades.splice(${i},1);renderGrades()">✕</button>
+    </div>`;
+  }).join('');
+
+  const totalScore = grades.reduce((s, g) => s + g.score, 0);
+  const totalMax = grades.reduce((s, g) => s + g.max, 0);
+  const avg = Math.round(totalScore / totalMax * 100);
+  const letter = letterFromPct(avg);
+  const colors = { A:'#6ee7b7', B:'#60a5fa', C:'#fbbf24', D:'#fca47a', F:'#f87171' };
+  document.getElementById('avg-display').textContent = avg + '%';
+  document.getElementById('letter-display').textContent = letter;
+  document.getElementById('letter-display').style.color = colors[letter];
+}
+
+function clearGrades() { grades = []; renderGrades(); }
+
+// ===== TIMER =====
+const modes = { pomodoro: 25*60, short: 5*60, long: 15*60 };
+const labels = { pomodoro: 'Focus', short: 'Short Break', long: 'Long Break' };
+let currentMode = 'pomodoro';
+let totalSeconds = modes.pomodoro;
+let remaining = totalSeconds;
+let running = false;
+let interval = null;
+let sessions = 0;
+let studySubject = '';
+const CIRCUM = 2 * Math.PI * 100; // 628.3
+
+function setMode(mode, btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = mode;
+  totalSeconds = modes[mode];
+  remaining = totalSeconds;
+  running = false;
+  clearInterval(interval);
+  document.getElementById('start-btn').textContent = '▶ Start';
+  document.getElementById('timer-phase').textContent = labels[mode];
+  const prog = document.getElementById('timer-prog');
+  prog.style.stroke = mode === 'pomodoro' ? 'var(--accent2)' : 'var(--accent3)';
+  updateDisplay();
+}
+
+function updateDisplay() {
+  const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+  const s = String(remaining % 60).padStart(2, '0');
+  document.getElementById('timer-time').textContent = `${m}:${s}`;
+  const offset = CIRCUM * (1 - remaining / totalSeconds);
+  document.getElementById('timer-prog').style.strokeDashoffset = offset;
+}
+
+function toggleTimer() {
+  if (running) {
+    clearInterval(interval);
+    running = false;
+    document.getElementById('start-btn').textContent = '▶ Resume';
+  } else {
+    running = true;
+    document.getElementById('start-btn').textContent = '⏸ Pause';
+    interval = setInterval(() => {
+      remaining--;
+      updateDisplay();
+      if (remaining <= 0) {
+        clearInterval(interval);
+        running = false;
+        document.getElementById('start-btn').textContent = '▶ Start';
+        if (currentMode === 'pomodoro') {
+          sessions = Math.min(sessions + 1, 4);
+          updateDots();
+        }
+        // Flash notification
+        document.title = '✅ Time\'s up! — StudySpace';
+        setTimeout(() => document.title = 'StudySpace', 3000);
+      }
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(interval);
+  running = false;
+  remaining = totalSeconds;
+  document.getElementById('start-btn').textContent = '▶ Start';
+  updateDisplay();
+}
+
+function updateDots() {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`p${i}`).classList.toggle('done', i <= sessions);
+  }
+}
+
+function setSubject(sub, btn) {
+  studySubject = sub;
+  document.querySelectorAll('.subj-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+updateDisplay();
+</script>
+</body>
+</html>
