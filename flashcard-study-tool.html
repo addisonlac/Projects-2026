@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlipStudy — Flashcard Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Syne:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f0e8;
+  --surface: #faf7f2;
+  --surface2: #ede8df;
+  --ink: #1a1510;
+  --ink2: #4a4540;
+  --ink3: #8a837a;
+  --accent: #c84b2f;
+  --accent2: #2563eb;
+  --accent3: #16a34a;
+  --border: rgba(26,21,16,0.12);
+  --shadow: 0 4px 24px rgba(26,21,16,0.12);
+  --shadow-lg: 0 12px 48px rgba(26,21,16,0.18);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 15% 85%, rgba(200,75,47,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 85% 10%, rgba(37,99,235,0.06) 0%, transparent 50%);
+}
+
+/* ===================== HEADER ===================== */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 2.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.logo span { color: var(--accent); }
+.header-right { display: flex; gap: 0.7rem; align-items: center; }
+.stats-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-size: 0.78rem;
+  padding: 0.35rem 0.85rem;
+  color: var(--ink2);
+}
+.stats-pill b { color: var(--ink); }
+
+/* ===================== LAYOUT ===================== */
+.app { display: flex; min-height: calc(100vh - 65px); }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  padding: 1.4rem;
+  gap: 0.5rem;
+}
+.sidebar-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--ink3);
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+  padding: 0 0.4rem;
+}
+.deck-item {
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.deck-item:hover { background: var(--surface2); }
+.deck-item.active { background: var(--ink); color: #f5f0e8; border-color: var(--ink); }
+.deck-item.active .deck-count { background: rgba(255,255,255,0.2); color: #f5f0e8; }
+.deck-emoji { font-size: 1.1rem; flex-shrink: 0; }
+.deck-info { flex: 1; min-width: 0; }
+.deck-name { font-size: 0.88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.deck-count {
+  font-size: 0.72rem;
+  background: var(--surface2);
+  color: var(--ink3);
+  border-radius: 99px;
+  padding: 0.15rem 0.5rem;
+  flex-shrink: 0;
+}
+.add-deck-btn {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px dashed var(--border);
+  background: none;
+  color: var(--ink3);
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  width: 100%;
+  transition: all 0.15s;
+}
+.add-deck-btn:hover { border-color: var(--ink2); color: var(--ink); background: var(--surface2); }
+
+/* ===== MAIN AREA ===== */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Toolbar */
+.toolbar {
+  padding: 1.2rem 2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--surface);
+}
+.toolbar-left { flex: 1; }
+.deck-title-display {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.deck-subtitle { font-size: 0.8rem; color: var(--ink3); margin-top: 0.1rem; }
+.toolbar-right { display: flex; gap: 0.6rem; }
+
+.btn {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--ink); color: #f5f0e8; }
+.btn-primary:hover { background: #2d261e; transform: translateY(-1px); }
+.btn-outline { background: none; border: 1.5px solid var(--border); color: var(--ink2); }
+.btn-outline:hover { border-color: var(--ink); color: var(--ink); background: var(--surface2); }
+.btn-danger { background: none; border: 1.5px solid rgba(200,75,47,0.3); color: var(--accent); }
+.btn-danger:hover { background: rgba(200,75,47,0.08); }
+.btn-success { background: var(--accent3); color: white; }
+.btn-success:hover { opacity: 0.9; }
+
+/* ===== VIEW MODES ===== */
+.view-toggle { display: flex; gap: 0.3rem; }
+.view-btn {
+  padding: 0.45rem 0.8rem;
+  border-radius: 7px;
+  border: 1.5px solid var(--border);
+  background: none;
+  color: var(--ink3);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+.view-btn.active { background: var(--ink); color: #f5f0e8; border-color: var(--ink); }
+
+/* ===== PANELS ===== */
+.content { flex: 1; overflow-y: auto; padding: 2rem; }
+
+/* --- GRID VIEW --- */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+.mini-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.mini-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+.mini-card-front {
+  font-size: 0.82rem;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.mini-card-q {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  flex: 1;
+  line-height: 1.45;
+}
+.mini-card-actions {
+  display: flex;
+  gap: 0.4rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+  margin-top: auto;
+}
+.mini-card:hover .mini-card-actions { opacity: 1; }
+.icon-btn {
+  background: var(--surface2);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  color: var(--ink2);
+  transition: background 0.15s;
+}
+.icon-btn:hover { background: var(--border); }
+.icon-btn.del:hover { background: rgba(200,75,47,0.15); color: var(--accent); }
+
+/* --- STUDY VIEW --- */
+.study-view { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding-top: 1rem; }
+.study-progress-bar {
+  width: 100%; max-width: 600px;
+  height: 5px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.study-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+.study-counter { font-size: 0.82rem; color: var(--ink3); }
+
+/* THE CARD */
+.flashcard-scene {
+  width: 100%;
+  max-width: 600px;
+  height: 340px;
+  perspective: 1200px;
+  cursor: pointer;
+}
+.flashcard-inner {
+  width: 100%; height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+.flashcard-inner.flipped { transform: rotateY(180deg); }
+.card-face {
+  position: absolute; inset: 0;
+  border-radius: 20px;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem;
+  box-shadow: var(--shadow-lg);
+}
+.card-front {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.card-back {
+  background: var(--ink);
+  color: #f5f0e8;
+  transform: rotateY(180deg);
+}
+.card-label {
+  position: absolute;
+  top: 1.2rem; left: 1.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+.card-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.4;
+}
+.card-hint {
+  position: absolute;
+  bottom: 1.2rem;
+  font-size: 0.75rem;
+  opacity: 0.4;
+}
+.study-actions {
+  display: flex; gap: 1rem;
+  width: 100%; max-width: 600px;
+  justify-content: center;
+}
+.grade-btn {
+  flex: 1;
+  max-width: 180px;
+  padding: 0.8rem;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 0.88rem;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+.grade-btn .sub { font-size: 0.72rem; font-weight: 400; opacity: 0.7; }
+.grade-again { background: rgba(200,75,47,0.1); border-color: rgba(200,75,47,0.3); color: var(--accent); }
+.grade-again:hover { background: rgba(200,75,47,0.2); }
+.grade-good { background: rgba(37,99,235,0.1); border-color: rgba(37,99,235,0.3); color: var(--accent2); }
+.grade-good:hover { background: rgba(37,99,235,0.2); }
+.grade-easy { background: rgba(22,163,74,0.1); border-color: rgba(22,163,74,0.3); color: var(--accent3); }
+.grade-easy:hover { background: rgba(22,163,74,0.2); }
+.grade-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* --- RESULTS --- */
+.results-view {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1.5rem; text-align: center; padding-top: 1rem;
+}
+.results-ring {
+  width: 140px; height: 140px;
+  position: relative;
+}
+.results-ring svg { transform: rotate(-90deg); }
+.results-ring circle.bg { fill: none; stroke: var(--surface2); stroke-width: 10; }
+.results-ring circle.prog { fill: none; stroke-width: 10; stroke-linecap: round; stroke-dasharray: 377; transition: stroke-dashoffset 1s ease; }
+.results-pct {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 900;
+}
+.results-breakdown {
+  display: flex; gap: 1.5rem;
+}
+.rb-item { text-align: center; }
+.rb-num { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; line-height: 1; }
+.rb-label { font-size: 0.78rem; color: var(--ink3); margin-top: 0.2rem; }
+
+/* --- ADD CARD FORM --- */
+.add-form {
+  max-width: 560px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+.add-form h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.form-label { font-size: 0.78rem; font-weight: 600; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.06em; }
+textarea, input[type="text"] {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  color: var(--ink);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.92rem;
+  padding: 0.75rem 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: vertical;
+}
+textarea:focus, input[type="text"]:focus { border-color: var(--ink); }
+textarea::placeholder, input::placeholder { color: var(--ink3); }
+textarea { min-height: 90px; }
+.form-row { display: flex; gap: 1rem; }
+.form-row .form-group { flex: 1; }
+
+/* === MODAL === */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,21,16,0.5);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 90%; max-width: 440px;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(12px);
+  transition: transform 0.2s;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 1.2rem; }
+.modal-btns { display: flex; gap: 0.7rem; justify-content: flex-end; margin-top: 1.2rem; }
+.emoji-picker { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
+.emoji-opt {
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.emoji-opt.selected { border-color: var(--ink); background: var(--surface2); }
+
+/* Empty state */
+.empty-deck {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1rem; padding: 4rem 2rem; text-align: center;
+  color: var(--ink3);
+}
+.empty-deck .big { font-size: 3.5rem; }
+.empty-deck p { max-width: 280px; font-size: 0.9rem; line-height: 1.6; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+@media(max-width:640px) {
+  .sidebar { display: none; }
+  .toolbar { padding: 1rem; }
+  .content { padding: 1rem; }
+  header { padding: 1rem 1.2rem; }
+  .study-actions { gap: 0.6rem; }
+  .grade-btn { padding: 0.65rem; font-size: 0.8rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Flip<span>Study</span></div>
+  <div class="header-right">
+    <div class="stats-pill">Cards studied today: <b id="today-count">0</b></div>
+    <div class="stats-pill">Streak: <b id="streak-count">0</b>🔥</div>
+  </div>
+</header>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-title">My Decks</div>
+    <div id="deck-list"></div>
+    <button class="add-deck-btn" onclick="openNewDeckModal()">＋ New Deck</button>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="deck-title-display" id="deck-title">Select a Deck</div>
+        <div class="deck-subtitle" id="deck-subtitle">Choose a deck from the sidebar to begin</div>
+      </div>
+      <div class="toolbar-right">
+        <div class="view-toggle" id="view-toggle" style="display:none">
+          <button class="view-btn active" onclick="setView('grid',this)" title="Browse">⊞</button>
+          <button class="view-btn" onclick="setView('study',this)" title="Study">▶</button>
+        </div>
+        <button class="btn btn-outline" id="add-card-btn" style="display:none" onclick="setView('add')">+ Add Card</button>
+        <button class="btn btn-primary" id="study-btn" style="display:none" onclick="startStudy()">Study Now</button>
+      </div>
+    </div>
+
+    <div class="content" id="main-content">
+      <div class="empty-deck">
+        <div class="big">🗂️</div>
+        <p>Create a deck and add flashcards to start studying.</p>
+        <button class="btn btn-primary" onclick="openNewDeckModal()">Create Your First Deck</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW DECK MODAL -->
+<div class="modal-overlay" id="deck-modal" onclick="if(event.target===this)closeDeckModal()">
+  <div class="modal">
+    <h3>New Deck</h3>
+    <div class="form-group">
+      <label class="form-label">Deck Name</label>
+      <input type="text" id="new-deck-name" placeholder="e.g. Biology 201 — Cell Signaling">
+    </div>
+    <div class="form-group" style="margin-top:0.8rem">
+      <label class="form-label">Icon</label>
+      <div class="emoji-picker" id="emoji-picker">
+        ${['📚','🧬','⚗️','📐','💻','🌍','🏛️','🎭','💊','⚖️','🧮','📖','🔬','🎵','🏋️'].map((e,i) =>
+          `<button class="emoji-opt${i===0?' selected':''}" onclick="selectEmoji(this,'${e}')">${e}</button>`
+        ).join('')}
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeDeckModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createDeck()">Create Deck</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let decks = [
+  { id: 1, name: 'Biology 201', emoji: '🧬', cards: [
+    { id: 1, q: 'What is the powerhouse of the cell?', a: 'The mitochondria — it produces ATP via cellular respiration (Krebs cycle + oxidative phosphorylation).', score: 0 },
+    { id: 2, q: 'Define osmosis', a: 'The passive movement of water molecules through a semipermeable membrane from a region of low solute concentration to high solute concentration.', score: 0 },
+    { id: 3, q: 'What is the central dogma of molecular biology?', a: 'DNA → RNA → Protein. Genetic information flows from DNA (replication), is transcribed into mRNA, and translated into proteins by ribosomes.', score: 0 },
+  ]},
+  { id: 2, name: 'Data Structures', emoji: '💻', cards: [
+    { id: 1, q: 'What is the time complexity of binary search?', a: 'O(log n) — the search space is halved at each step, making it extremely efficient for sorted arrays.', score: 0 },
+    { id: 2, q: 'Difference between a stack and a queue?', a: 'Stack: LIFO (Last In, First Out). Queue: FIFO (First In, First Out). Stacks use push/pop, queues use enqueue/dequeue.', score: 0 },
+  ]},
+];
+let activeDeckId = null;
+let currentView = 'grid';
+let studyCards = [];
+let studyIndex = 0;
+let studyFlipped = false;
+let studyResults = { again: 0, good: 0, easy: 0 };
+let selectedEmoji = '📚';
+let todayCount = 0;
+
+// ===== DECK MANAGEMENT =====
+function renderSidebar() {
+  const list = document.getElementById('deck-list');
+  list.innerHTML = decks.map(d => `
+    <div class="deck-item ${d.id === activeDeckId ? 'active' : ''}" onclick="selectDeck(${d.id})">
+      <span class="deck-emoji">${d.emoji}</span>
+      <div class="deck-info">
+        <div class="deck-name">${d.name}</div>
+      </div>
+      <span class="deck-count">${d.cards.length}</span>
+    </div>
+  `).join('');
+}
+
+function selectDeck(id) {
+  activeDeckId = id;
+  currentView = 'grid';
+  renderSidebar();
+  renderToolbar();
+  renderMain();
+}
+
+function renderToolbar() {
+  const deck = decks.find(d => d.id === activeDeckId);
+  if (!deck) return;
+  document.getElementById('deck-title').textContent = deck.emoji + ' ' + deck.name;
+  document.getElementById('deck-subtitle').textContent = `${deck.cards.length} card${deck.cards.length !== 1 ? 's' : ''} in this deck`;
+  document.getElementById('view-toggle').style.display = 'flex';
+  document.getElementById('add-card-btn').style.display = 'block';
+  document.getElementById('study-btn').style.display = deck.cards.length > 0 ? 'block' : 'none';
+
+  // Sync view toggle
+  document.querySelectorAll('.view-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['grid','study'][i] === currentView);
+  });
+}
+
+// ===== MAIN RENDER =====
+function renderMain() {
+  const deck = decks.find(d => d.id === activeDeckId);
+  if (!deck) return;
+
+  if (currentView === 'grid') renderGridView(deck);
+  else if (currentView === 'add') renderAddView(deck);
+  else if (currentView === 'study') renderStudyView();
+  else if (currentView === 'results') renderResultsView();
+}
+
+// ===== GRID VIEW =====
+function renderGridView(deck) {
+  const el = document.getElementById('main-content');
+  if (!deck.cards.length) {
+    el.innerHTML = `<div class="empty-deck">
+      <div class="big">${deck.emoji}</div>
+      <p>No cards yet. Add some flashcards to start studying!</p>
+      <button class="btn btn-primary" onclick="setView('add')">Add First Card</button>
+    </div>`;
+    return;
+  }
+  el.innerHTML = `<div class="cards-grid">${deck.cards.map((c,i) => `
+    <div class="mini-card" onclick="startStudyFrom(${i})">
+      <div class="mini-card-front">Question</div>
+      <div class="mini-card-q">${c.q}</div>
+      <div class="mini-card-actions">
+        <button class="icon-btn" onclick="event.stopPropagation();editCard(${c.id})">✏️ Edit</button>
+        <button class="icon-btn del" onclick="event.stopPropagation();deleteCard(${c.id})">🗑</button>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+
+// ===== ADD VIEW =====
+function renderAddView(deck) {
+  document.getElementById('main-content').innerHTML = `
+    <div class="add-form">
+      <h3>Add New Card</h3>
+      <div class="form-group">
+        <label class="form-label">Question / Front</label>
+        <textarea id="card-q" placeholder="Type your question here..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Answer / Back</label>
+        <textarea id="card-a" placeholder="Type the answer here..."></textarea>
+      </div>
+      <div style="display:flex;gap:0.7rem;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="setView('grid')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveCard()">Save Card</button>
+        <button class="btn btn-success" onclick="saveAndAnother()">Save & Add Another</button>
+      </div>
+    </div>`;
+  document.getElementById('card-q').focus();
+}
+
+function saveCard(andAnother) {
+  const deck = decks.find(d => d.id === activeDeckId);
+  const q = document.getElementById('card-q').value.trim();
+  const a = document.getElementById('card-a').value.trim();
+  if (!q || !a) { alert('Please fill in both question and answer.'); return; }
+  deck.cards.push({ id: Date.now(), q, a, score: 0 });
+  renderToolbar();
+  if (andAnother) renderAddView(deck);
+  else setView('grid');
+}
+function saveAndAnother() { saveCard(true); }
+
+function deleteCard(cardId) {
+  if (!confirm('Delete this card?')) return;
+  const deck = decks.find(d => d.id === activeDeckId);
+  deck.cards = deck.cards.filter(c => c.id !== cardId);
+  renderToolbar();
+  renderMain();
+}
+
+function editCard(cardId) {
+  const deck = decks.find(d => d.id === activeDeckId);
+  const card = deck.cards.find(c => c.id === cardId);
+  document.getElementById('main-content').innerHTML = `
+    <div class="add-form">
+      <h3>Edit Card</h3>
+      <div class="form-group">
+        <label class="form-label">Question / Front</label>
+        <textarea id="card-q">${card.q}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Answer / Back</label>
+        <textarea id="card-a">${card.a}</textarea>
+      </div>
+      <div style="display:flex;gap:0.7rem;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="setView('grid')">Cancel</button>
+        <button class="btn btn-primary" onclick="updateCard(${cardId})">Update Card</button>
+      </div>
+    </div>`;
+}
+
+function updateCard(cardId) {
+  const deck = decks.find(d => d.id === activeDeckId);
+  const card = deck.cards.find(c => c.id === cardId);
+  const q = document.getElementById('card-q').value.trim();
+  const a = document.getElementById('card-a').value.trim();
+  if (!q || !a) { alert('Please fill in both fields.'); return; }
+  card.q = q; card.a = a;
+  setView('grid');
+}
+
+// ===== STUDY VIEW =====
+function startStudy() {
+  const deck = decks.find(d => d.id === activeDeckId);
+  studyCards = [...deck.cards].sort(() => Math.random() - 0.5);
+  studyIndex = 0;
+  studyFlipped = false;
+  studyResults = { again: 0, good: 0, easy: 0 };
+  currentView = 'study';
+  renderMain();
+}
+
+function startStudyFrom(i) {
+  const deck = decks.find(d => d.id === activeDeckId);
+  studyCards = [...deck.cards];
+  studyIndex = i;
+  studyFlipped = false;
+  studyResults = { again: 0, good: 0, easy: 0 };
+  currentView = 'study';
+  renderMain();
+}
+
+function renderStudyView() {
+  const card = studyCards[studyIndex];
+  const total = studyCards.length;
+  const pct = Math.round((studyIndex / total) * 100);
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="study-view">
+      <div style="width:100%;max-width:600px;display:flex;align-items:center;gap:1rem">
+        <div class="study-progress-bar" style="flex:1">
+          <div class="study-progress-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="study-counter">${studyIndex + 1} / ${total}</div>
+        <button class="btn btn-outline" style="padding:0.4rem 0.8rem;font-size:0.78rem" onclick="setView('grid')">✕ Exit</button>
+      </div>
+
+      <div class="flashcard-scene" onclick="flipCard()" id="card-scene">
+        <div class="flashcard-inner" id="card-inner">
+          <div class="card-face card-front">
+            <span class="card-label">Question</span>
+            <div class="card-text">${card.q}</div>
+            <span class="card-hint">Click to reveal answer</span>
+          </div>
+          <div class="card-face card-back">
+            <span class="card-label" style="color:rgba(245,240,232,0.5)">Answer</span>
+            <div class="card-text" style="font-size:1.2rem">${card.a}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="study-actions" id="study-actions">
+        <button class="grade-btn grade-again" id="btn-again" onclick="gradeCard('again')" disabled>
+          😓 Again <span class="sub">Didn't know</span>
+        </button>
+        <button class="grade-btn grade-good" id="btn-good" onclick="gradeCard('good')" disabled>
+          🙂 Good <span class="sub">Knew it</span>
+        </button>
+        <button class="grade-btn grade-easy" id="btn-easy" onclick="gradeCard('easy')" disabled>
+          😄 Easy <span class="sub">Too easy</span>
+        </button>
+      </div>
+
+      <div style="font-size:0.8rem;color:var(--ink3)">Press <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:0.1rem 0.4rem">Space</kbd> to flip</div>
+    </div>`;
+}
+
+function flipCard() {
+  if (studyFlipped) return;
+  studyFlipped = true;
+  document.getElementById('card-inner').classList.add('flipped');
+  ['btn-again','btn-good','btn-easy'].forEach(id => {
+    document.getElementById(id).disabled = false;
+  });
+}
+
+function gradeCard(grade) {
+  studyResults[grade]++;
+  todayCount++;
+  document.getElementById('today-count').textContent = todayCount;
+
+  studyIndex++;
+  studyFlipped = false;
+
+  if (studyIndex >= studyCards.length) {
+    currentView = 'results';
+    renderMain();
+  } else {
+    renderStudyView();
+  }
+}
+
+// ===== RESULTS VIEW =====
+function renderResultsView() {
+  const total = studyCards.length;
+  const known = studyResults.good + studyResults.easy;
+  const pct = Math.round((known / total) * 100);
+  const circumference = 377;
+  const offset = circumference * (1 - pct / 100);
+  const color = pct >= 80 ? 'var(--accent3)' : pct >= 60 ? 'var(--accent2)' : 'var(--accent)';
+  const msg = pct >= 90 ? '🎉 Outstanding!' : pct >= 70 ? '👏 Great work!' : pct >= 50 ? '💪 Keep it up!' : '📖 Keep studying!';
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="results-view">
+      <div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700">${msg}</div>
+      <div class="results-ring">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle class="bg" cx="70" cy="70" r="60"/>
+          <circle class="prog" cx="70" cy="70" r="60"
+            style="stroke:${color};stroke-dashoffset:${offset}" />
+        </svg>
+        <div class="results-pct">${pct}%</div>
+      </div>
+      <div class="results-breakdown">
+        <div class="rb-item"><div class="rb-num" style="color:var(--accent)">${studyResults.again}</div><div class="rb-label">Again</div></div>
+        <div class="rb-item"><div class="rb-num" style="color:var(--accent2)">${studyResults.good}</div><div class="rb-label">Good</div></div>
+        <div class="rb-item"><div class="rb-num" style="color:var(--accent3)">${studyResults.easy}</div><div class="rb-label">Easy</div></div>
+      </div>
+      <div style="display:flex;gap:0.8rem;margin-top:0.5rem">
+        <button class="btn btn-outline" onclick="setView('grid')">Back to Deck</button>
+        <button class="btn btn-primary" onclick="startStudy()">Study Again</button>
+        ${studyResults.again > 0 ? `<button class="btn btn-outline" onclick="studyMissed()">Review Missed (${studyResults.again})</button>` : ''}
+      </div>
+    </div>`;
+}
+
+function studyMissed() {
+  // Restudy only cards that were marked "again"
+  // Simple: reshuffle all for now
+  startStudy();
+}
+
+// ===== VIEW SETTER =====
+function setView(view, btn) {
+  currentView = view;
+  if (btn) {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  renderMain();
+}
+
+// ===== DECK MODAL =====
+function openNewDeckModal() {
+  document.getElementById('deck-modal').classList.add('open');
+  document.getElementById('new-deck-name').focus();
+}
+function closeDeckModal() {
+  document.getElementById('deck-modal').classList.remove('open');
+}
+function selectEmoji(btn, emoji) {
+  selectedEmoji = emoji;
+  document.querySelectorAll('.emoji-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+function createDeck() {
+  const name = document.getElementById('new-deck-name').value.trim();
+  if (!name) { alert('Please enter a deck name.'); return; }
+  const id = Date.now();
+  decks.push({ id, name, emoji: selectedEmoji, cards: [] });
+  closeDeckModal();
+  document.getElementById('new-deck-name').value = '';
+  selectDeck(id);
+}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown', e => {
+  if (currentView === 'study') {
+    if (e.code === 'Space') { e.preventDefault(); flipCard(); }
+    if (studyFlipped) {
+      if (e.key === '1') gradeCard('again');
+      if (e.key === '2') gradeCard('good');
+      if (e.key === '3') gradeCard('easy');
+    }
+  }
+  if (e.key === 'Escape') closeDeckModal();
+});
+
+// ===== INIT =====
+renderSidebar();
+selectDeck(1);
+</script>
+</body>
+</html>
